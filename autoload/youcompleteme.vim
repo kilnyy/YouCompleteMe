@@ -266,7 +266,7 @@ function! s:SetUpKeyMappings()
     endif
 
     silent! exe 'inoremap <unique> <silent> ' . invoke_key .
-          \ ' <C-R>=<SID>InvokeSemanticCompletion()<CR>'
+          \ ' <C-R>=<SID>InvokeCompletion()<CR>'
   endif
 
   if !empty( g:ycm_key_detailed_diagnostics )
@@ -765,6 +765,7 @@ function! s:InvokeCompletion()
         \ "vimsupport.GetBoolValue( 's:force_semantic' ) )"
 
   call s:PollCompletion()
+  return ''
 endfunction
 
 

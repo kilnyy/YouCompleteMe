@@ -22,6 +22,7 @@ set cpo&vim
 " This needs to be called outside of a function
 let s:script_folder_path = escape( expand( '<sfile>:p:h' ), '\' )
 let s:force_semantic = 0
+let s:completing = 0
 let s:completion_stopped = 0
 let s:default_completion = {
       \   'start_column': -1,
@@ -617,6 +618,7 @@ function! s:StopCompletion( key )
   call timer_stop( s:pollers.completion.id )
   if pumvisible()
     let s:completion_stopped = 1
+    let s:completing = 0
     return "\<C-y>"
   endif
   return a:key
@@ -659,10 +661,11 @@ function! s:OnTextChangedInsertMode()
   " CurrentIdentifierFinished check.
   if s:force_semantic && !s:Pyeval( 'base.LastEnteredCharIsIdentifierChar()' )
     let s:force_semantic = 0
+    let s:completing = 0
   endif
 
   if &completefunc == "youcompleteme#CompleteFunc" &&
-        \ ( g:ycm_auto_trigger || s:force_semantic ) &&
+        \ ( g:ycm_auto_trigger || s:force_semantic || s:completing) &&
         \ !s:InsideCommentOrStringAndShouldStop() &&
         \ !s:OnBlankLine()
     " Immediately call previous completion to avoid flickers.
@@ -686,6 +689,7 @@ function! s:OnInsertLeave()
   call timer_stop( s:pollers.completion.id )
   let s:force_semantic = 0
   let s:completion = s:default_completion
+  let s:completing = 0
 
   call s:OnFileReadyToParse()
   exec s:python_command "ycm_state.OnInsertLeave()"
@@ -719,6 +723,7 @@ function! s:IdentifierFinishedOperations()
   exec s:python_command "ycm_state.OnCurrentIdentifierFinished()"
   let s:force_semantic = 0
   let s:completion = s:default_completion
+  let s:completing = 0
 endfunction
 
 
@@ -761,6 +766,7 @@ endfunction
 
 
 function! s:InvokeCompletion()
+  let s:completing = 1
   exec s:python_command "ycm_state.SendCompletionRequest(" .
         \ "vimsupport.GetBoolValue( 's:force_semantic' ) )"
 
